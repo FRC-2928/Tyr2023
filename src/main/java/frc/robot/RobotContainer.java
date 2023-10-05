@@ -36,10 +36,8 @@ import frc.robot.subsystems.Tomahawk;
 
 import frc.robot.commands.DrivetrainCommands.DriveDistanceProfiled;
 import frc.robot.commands.DrivetrainCommands.RunRamseteTrajectory;
-import frc.robot.commands.RaiseShooterCommand;
-import frc.robot.commands.LowerShooterCommand;
-import frc.robot.commands.IntakeCommand;
-import frc.robot.commands.OuttakeCommand;
+import frc.robot.commands.ShooterCommand;
+import frc.robot.commands.IntakeOuttakeCommand;
 import frc.robot.commands.SpinnerCommand;
 import frc.robot.commands.ShootCommand;
 import frc.robot.commands.TomahawkCommand;
@@ -73,10 +71,10 @@ public class RobotContainer {
     SmartDashboard.putData(m_autoChooser);  
     
     // Configure default commands, button bindings, and shuffleboard
-    m_driverOI.getRaiseShooter().whileHeld(new RaiseShooterCommand(m_lifter)); //right bumper
-    m_driverOI.getLowerShooter().whileHeld(new LowerShooterCommand(m_lifter)); //left bumper
-    m_driverOI.getIntake().whileHeld(new IntakeCommand(m_shooterMotors)); //A
-    m_driverOI.getOuttake().whileHeld(new OuttakeCommand(m_shooterMotors)); //B
+    m_driverOI.getRaiseShooter().whileHeld(new ShooterCommand(m_lifter, true)); //right bumper
+    m_driverOI.getLowerShooter().whileHeld(new ShooterCommand(m_lifter, false)); //left bumper
+    m_driverOI.getIntake().whileHeld(new IntakeOuttakeCommand(m_shooterMotors, true)); //A
+    m_driverOI.getOuttake().whileHeld(new IntakeOuttakeCommand(m_shooterMotors, false)); //B
     m_driverOI.getSpinner().whileHeld(new SpinnerCommand(m_spinner)); //start 
     m_driverOI.getShoot().whileHeld(new ShootCommand(m_shooterSolenoid)); // Back
 

@@ -2,28 +2,30 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants;
-import frc.robot.subsystems.ShooterMotors;
+import frc.robot.subsystems.Lifter;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class IntakeCommand extends CommandBase {
-	private final ShooterMotors m_shooterMotors;
+public class ShooterCommand extends CommandBase {
+	private final Lifter m_lifter;
+	private final boolean m_raise;
 
-	public IntakeCommand(ShooterMotors shooterMotors) {
-		m_shooterMotors = shooterMotors;
-		addRequirements(m_shooterMotors);
+	public ShooterCommand(Lifter lifter, boolean raise) {
+		m_lifter = lifter;
+		addRequirements(m_lifter);
+		m_raise = raise;
 	}
 
-	// public IntakeCommand(String name) {
+	// public RaiseShooterCommand(String name) {
 	// 	super(name);
 	// 	requires(Robot.lifter);
 	// }
 
-	// public IntakeCommand(double timeout) {
+	// public RaiseShooterCommand(double timeout) {
 	// 	super(timeout);
 	// }
 
-	// public IntakeCommand(String name, double timeout) {
+	// public RaiseShooterCommand(String name, double timeout) {
 	// 	super(name, timeout);
 	// }
 
@@ -34,7 +36,13 @@ public class IntakeCommand extends CommandBase {
 	 // Called every time the scheduler runs while the command is scheduled.
 	 @Override
 	 public void execute() {
-		m_shooterMotors.Intake();
+		if (m_raise) {
+			m_lifter.Raise();
+		} else {
+			m_lifter.Lower();
+		}
+		
+		SmartDashboard.putNumber("EncPos", m_lifter.lifterPos());
 	}
 
  	// Returns true when the command should end.
@@ -46,7 +54,8 @@ public class IntakeCommand extends CommandBase {
 	// Called once the command ends or is interrupted.
 	@Override
 	public void end(boolean interrupted) {
-		m_shooterMotors.Stop();
+		m_lifter.Stop();
+		SmartDashboard.putNumber("EncPos", m_lifter.lifterPos());
 	}
 
 	// @Override
