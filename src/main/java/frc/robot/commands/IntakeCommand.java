@@ -3,15 +3,18 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants;
 import frc.robot.subsystems.ShooterMotors;
-
+import frc.robot.subsystems.Spinner;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class IntakeCommand extends CommandBase {
 	private final ShooterMotors m_shooterMotors;
+	private final Spinner m_spinner;
 
-	public IntakeCommand(ShooterMotors shooterMotors) {
+	public IntakeCommand(ShooterMotors shooterMotors,
+											 Spinner spinner) {
 		m_shooterMotors = shooterMotors;
-		addRequirements(m_shooterMotors);
+		m_spinner = spinner;
+		addRequirements(m_shooterMotors, m_spinner);
 	}
 
 	// public IntakeCommand(String name) {
@@ -35,6 +38,7 @@ public class IntakeCommand extends CommandBase {
 	 @Override
 	 public void execute() {
 		m_shooterMotors.Intake();
+		m_spinner.On();
 	}
 
  	// Returns true when the command should end.
@@ -47,6 +51,7 @@ public class IntakeCommand extends CommandBase {
 	@Override
 	public void end(boolean interrupted) {
 		m_shooterMotors.Stop();
+		m_spinner.Off();
 	}
 
 	// @Override
