@@ -3,18 +3,18 @@ package frc.robot.oi;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.button.Button;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.oi.DriverOI;
 
 public class DriverOI {
     private XboxController m_controller;
-    private Button m_shiftButton;
+    private Trigger m_shiftButton;
 
     public DriverOI(XboxController controller) {
         m_controller = controller;
 
-        m_shiftButton = new Button(() -> m_controller.getLeftStickButtonPressed());
+        m_shiftButton = new Trigger(() -> m_controller.getLeftStickButtonPressed());
 
   
     }
@@ -22,27 +22,27 @@ public class DriverOI {
     // ---------------- Intake ----------------------------
 
 
-    // public Button getGroundIntakeButton() {
+    // public Trigger getGroundIntakeButton() {
     //     return new Button(() -> m_controller.getLeftTriggerAxis() > 0.2);
     // }
 
 
-    // public Button getStationIntakeButton() {
+    // public Trigger getStationIntakeButton() {
     //     return new JoystickButton(m_controller, XboxController.Button.kLeftBumper.value);
     // }
 
-    // public Button getToggleIntakeMotorButton(){
+    // public Trigger getToggleIntakeMotorButton(){
     //     return new JoystickButton(m_controller, XboxController.Button.kA.value);
     // }
 
-    // public Button getToggleFeederMotorButton(){
+    // public Trigger getToggleFeederMotorButton(){
     //     return new JoystickButton(m_controller, XboxController.Button.kB.value);
     // }
 
     // ---------------- Climber ----------------------------
 
 
-    // public Button getClimbTrigger() {
+    // public Trigger getClimbTrigger() {
     //     return new JoystickButton(m_controller, XboxController.Axis.kRightTrigger.value);
     // }
 
@@ -50,108 +50,108 @@ public class DriverOI {
 
 
     
-    // public Button getAutoShootingButton() {
+    // public Trigger getAutoShootingButton() {
     //     return new JoystickButton(m_controller, XboxController.Button.kRightBumper.value);
     // }
 
 
-    // public Button getSetpointShootingButton(){
+    // public Trigger getSetpointShootingButton(){
     //     return new Button(() -> m_controller.getRightTriggerAxis() > 0.2);
     // }
 
 
-    // public Button getFenderShotButton() {
+    // public Trigger getFenderShotButton() {
     //     return new Button(() -> m_controller.getPOV() == 180);
     // }
 
 
-    // public Button getInitiationlineShotButton() {
+    // public Trigger getInitiationlineShotButton() {
     //     return new Button(() -> m_controller.getPOV() == 0);
     // }
 
 
-    // public Button getShooterDebugButton() {
+    // public Trigger getShooterDebugButton() {
     //     return new Button(() -> m_controller.getPOV() == 90);
     // }
 
 
-    // public Button getFeedButton() {
+    // public Trigger getFeedButton() {
     //     return new Button(() -> m_controller.getRightTriggerAxis() > 0.2);
     // }
 
-    // public Button getIncrementFlywheelButton(){
+    // public Trigger getIncrementFlywheelButton(){
     //     return new JoystickButton(m_controller, XboxController.Button.kStart.value);
     // }
 
-    // public Button getDecrementFlywheelButton(){
+    // public Trigger getDecrementFlywheelButton(){
     //     return new JoystickButton(m_controller, XboxController.Button.kBack.value);
     // }
 
-  //  public Button getToggleFlywheelButton(){
+  //  public Trigger getToggleFlywheelButton(){
    //     return new JoystickButton(m_controller, XboxController.Button.kLeftBumper.value);
    // }
 
-    public Button getTurnTurretLeftButton(){
-        return new Button(() -> m_controller.getPOV() == 270);
+    public Trigger getTurnTurretLeftButton(){
+        return new Trigger(() -> m_controller.getPOV() == 270);
     }
 
-    public Button getTurnTurretRightButton(){
-        return new Button(() -> m_controller.getPOV() == 90);
+    public Trigger getTurnTurretRightButton(){
+        return new Trigger(() -> m_controller.getPOV() == 90);
     }
 
     // ---------------- Drivetrain ----------------------------
 
-    // public Button getResetEncodersButton() {
+    // public Trigger getResetEncodersButton() {
     //     return new JoystickButton(m_controller, XboxController.Button.kB.value);
     // }
 
-    public Button getShiftLowButton() {
+    public Trigger getShiftLowButton() {
         return new JoystickButton(m_controller, XboxController.Button.kX.value);
     }
 
-    public Button getShiftHighButton() {
+    public Trigger getShiftHighButton() {
         return new JoystickButton(m_controller, XboxController.Button.kY.value);
     }
     
-    public Button getRaiseShooter() {  // new Tyr
+    public Trigger getRaiseShooter() {  // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kRightBumper.value);
     }
 
-    public Button getLowerShooter(){ // new Tyr
+    public Trigger getLowerShooter(){ // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kLeftBumper.value);
     }
 
-    public Button getIntake() { // new Tyr
+    public Trigger getIntake() { // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kA.value);
     }
 
-    public Button getOuttake() { // new Tyr
+    public Trigger getOuttake() { // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kB.value);
     }
 
-    public Button getSpinner() { // new Tyr
+    public Trigger getSpinner() { // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kStart.value);
     }
 
-    public Button getShoot(){ // new Tyr
+    public Trigger getShoot(){ // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kBack.value);
     }
 
-    public Button getLowerTomahawk(){ // new Tyr
+    public Trigger getLowerTomahawk(){ // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kRightStick.value);
     }
 
-    public Button getRaiseTomahawk(){ // new Tyr
+    public Trigger getRaiseTomahawk(){ // new Tyr
         return new JoystickButton(m_controller, XboxController.Button.kLeftStick.value);
     }
 
 
-    public Button getShiftButton() {
+    public Trigger getShiftButton() {
         return m_shiftButton;
 
     }
     
-    // public Button getTurnTurretToTargetButton() {
+    // public Trigger getTurnTurretToTargetButton() {
      //   return new JoystickButton(m_controller, XboxController.Button.kRightBumper.value);
     // }
 
