@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.OIConstants;
 
@@ -76,7 +78,16 @@ public class RobotContainer {
     m_driverOI.getIntake().whileTrue(new IntakeOuttakeCommand(m_shooterMotors, true)); //A
     m_driverOI.getOuttake().whileTrue(new IntakeOuttakeCommand(m_shooterMotors, false)); //B
     m_driverOI.getSpinner().whileTrue(new SpinnerCommand(m_spinner)); //start 
-    m_driverOI.getShoot().whileTrue(new ShootCommand(m_shooterSolenoid)); // Back
+    // m_driverOI.getShoot().whileTrue(new ShootCommand(m_shooterSolenoid)); // Back
+    m_driverOI.getShoot().onTrue(new SequentialCommandGroup(
+      new InstantCommand(() -> m_tomahawk.Raise()),
+      new InstantCommand(() -> m_shooterMotors.Outtake()), 
+      new WaitCommand(1.5),
+      new InstantCommand(() -> m_shooterSolenoid.Shoot()),
+      new WaitCommand(.5),
+      new InstantCommand(() -> m_shooterSolenoid.Retract()),
+      new InstantCommand(() -> m_shooterMotors.Stop())
+      ));
 
     m_driverOI.getLowerTomahawk().onTrue(new TomahawkCommand(m_tomahawk,false)); // right stick
     m_driverOI.getRaiseTomahawk().onTrue(new TomahawkCommand(m_tomahawk,true)); // left stick
