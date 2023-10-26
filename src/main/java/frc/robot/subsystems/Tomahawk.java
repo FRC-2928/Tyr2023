@@ -14,7 +14,7 @@ public class Tomahawk extends SubsystemBase {
 		this.solen = new Solenoid(PneumaticsModuleType.CTREPCM, tomahawkSolenoid);
 	}
 	
-	public void Raise()
+	public void Lower()
 	{
 		if (!this.solen.get())
 		{
@@ -22,7 +22,7 @@ public class Tomahawk extends SubsystemBase {
 		}
 	}
 	
-	public void Lower()
+	public void Raise()
 	{
 		if (this.solen.get())
 		{

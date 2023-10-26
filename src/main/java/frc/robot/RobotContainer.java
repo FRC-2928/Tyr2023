@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.OIConstants;
 
@@ -36,10 +38,8 @@ import frc.robot.subsystems.Tomahawk;
 
 import frc.robot.commands.DrivetrainCommands.DriveDistanceProfiled;
 import frc.robot.commands.DrivetrainCommands.RunRamseteTrajectory;
-import frc.robot.commands.RaiseShooterCommand;
-import frc.robot.commands.LowerShooterCommand;
-import frc.robot.commands.IntakeCommand;
-import frc.robot.commands.OuttakeCommand;
+import frc.robot.commands.ShooterCommand;
+import frc.robot.commands.IntakeOuttakeCommand;
 import frc.robot.commands.SpinnerCommand;
 import frc.robot.commands.ShootCommand;
 import frc.robot.commands.TomahawkCommand;
@@ -58,9 +58,9 @@ public class RobotContainer {
 
   // XBox Controllers
   private final XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
-  private final XboxController m_operatorController = new XboxController(OIConstants.kOperatorControllerPort);
+  // private final XboxController m_operatorController = new XboxController(OIConstants.kOperatorControllerPort);
   private final DriverOI m_driverOI = new DriverOI(m_driverController);
-  private final OperatorOI m_operatorOI = new OperatorOI(m_operatorController);
+  // private final OperatorOI m_operatorOI = new OperatorOI(m_operatorController);
   
   // Shuffleboard 
   private final SendableChooser<Command> m_autoChooser = new SendableChooser<>();
@@ -73,15 +73,24 @@ public class RobotContainer {
     SmartDashboard.putData(m_autoChooser);  
     
     // Configure default commands, button bindings, and shuffleboard
-    m_driverOI.getRaiseShooter().whileHeld(new RaiseShooterCommand(m_lifter)); //right bumper
-    m_driverOI.getLowerShooter().whileHeld(new LowerShooterCommand(m_lifter)); //left bumper
-    m_driverOI.getIntake().whileHeld(new IntakeCommand(m_shooterMotors)); //A
-    m_driverOI.getOuttake().whileHeld(new OuttakeCommand(m_shooterMotors)); //B
-    m_driverOI.getSpinner().whileHeld(new SpinnerCommand(m_spinner)); //start 
-    m_driverOI.getShoot().whileHeld(new ShootCommand(m_shooterSolenoid)); // Back
+    m_driverOI.getRaiseShooter().whileTrue(new ShooterCommand(m_lifter, true)); //right bumper
+    m_driverOI.getLowerShooter().whileTrue(new ShooterCommand(m_lifter, false)); //left bumper
+    m_driverOI.getIntake().whileTrue(new IntakeOuttakeCommand(m_shooterMotors, true)); //A
+    m_driverOI.getOuttake().whileTrue(new IntakeOuttakeCommand(m_shooterMotors, false)); //B
+    m_driverOI.getSpinner().whileTrue(new SpinnerCommand(m_spinner)); //start 
+    // m_driverOI.getShoot().whileTrue(new ShootCommand(m_shooterSolenoid)); // Back
+    m_driverOI.getShoot().onTrue(new SequentialCommandGroup(
+      new InstantCommand(() -> m_tomahawk.Raise()),
+      new InstantCommand(() -> m_shooterMotors.Outtake()), 
+      new WaitCommand(1.5),
+      new InstantCommand(() -> m_shooterSolenoid.Shoot()),
+      new WaitCommand(.5),
+      new InstantCommand(() -> m_shooterSolenoid.Retract()),
+      new InstantCommand(() -> m_shooterMotors.Stop())
+      ));
 
-    m_driverOI.getLowerTomahawk().whenPressed(new TomahawkCommand(m_tomahawk,false)); // right stick
-    m_driverOI.getRaiseTomahawk().whenPressed(new TomahawkCommand(m_tomahawk,true)); // left stick
+    m_driverOI.getLowerTomahawk().onTrue(new TomahawkCommand(m_tomahawk,false)); // right stick
+    m_driverOI.getRaiseTomahawk().onTrue(new TomahawkCommand(m_tomahawk,true)); // left stick
 
     configureSubsystems();
     
@@ -121,11 +130,11 @@ public class RobotContainer {
             m_drivetrain));
 
     // Configure button commands
-    m_driverOI.getShiftLowButton().whenPressed(new InstantCommand(m_transmission::setLow, m_transmission));
-    m_driverOI.getShiftHighButton().whenPressed(new InstantCommand(m_transmission::setHigh, m_transmission));
-    m_operatorOI.getPrintButton().whenPressed(new PrintCommand("Print from Operator"));
-    //   m_driverOI.getResetEncodersButton().whenPressed(new InstantCommand(m_drivetrain::resetEncoders, m_drivetrain));
-    m_driverOI.getShiftButton().whenPressed(new InstantCommand(m_transmission::toggle, m_transmission));
+    m_driverOI.getShiftLowButton().onTrue(new InstantCommand(m_transmission::setLow, m_transmission));
+    m_driverOI.getShiftHighButton().onTrue(new InstantCommand(m_transmission::setHigh, m_transmission));
+    // m_operatorOI.getPrintButton().onTrue(new PrintCommand("Print from Operator"));
+    //   m_driverOI.getResetEncodersButton().onTrue(new InstantCommand(m_drivetrain::resetEncoders, m_drivetrain));
+    m_driverOI.getShiftButton().onTrue(new InstantCommand(m_transmission::toggle, m_transmission));
     
     // Configure Shuffleboard commands
     m_autoChooser.setDefaultOption("Calibrate Robot", new RunRamseteTrajectory(m_drivetrain, calibrateTrajectory()));
@@ -149,11 +158,11 @@ public class RobotContainer {
     //         m_turret));
 
     // // Configure button commands
-    // m_driverOI.getTurnTurretLeftButton().whileHeld(new MoveTurret(m_turret, -1));
-    // m_driverOI.getTurnTurretRightButton().whileHeld(new MoveTurret(m_turret, 1));
-    // m_driverOI.getTurnTurretToTargetButton().whileHeld(new TurnTurretToTarget(m_turret));
+    // m_driverOI.getTurnTurretLeftButton().whileTrue(new MoveTurret(m_turret, -1));
+    // m_driverOI.getTurnTurretRightButton().whileTrue(new MoveTurret(m_turret, 1));
+    // m_driverOI.getTurnTurretToTargetButton().whileTrue(new TurnTurretToTarget(m_turret));
 
-    // m_driverOI.getToggleIntakeMotorButton().whenPressed(new PrintCommand("Print from Driver"));
+    // m_driverOI.getToggleIntakeMotorButton().onTrue(new PrintCommand("Print from Driver"));
     // Configure Shuffleboard commands    
   }
 
@@ -165,8 +174,8 @@ public class RobotContainer {
     // m_intake.setDefaultCommand(new RunCommand(m_intake::startMotors, m_intake));
 
     // Configure button commands
-    // m_driverOI.getToggleIntakeMotorButton().whenPressed(new ToggleIntakeMotor(m_intake));
-    // m_driverOI.getToggleFeederMotorButton().whenPressed(new ToggleFeederMotor(m_intake));
+    // m_driverOI.getToggleIntakeMotorButton().onTrue(new ToggleIntakeMotor(m_intake));
+    // m_driverOI.getToggleFeederMotorButton().onTrue(new ToggleFeederMotor(m_intake));
 
     // // Configure Shuffleboard commands
     // m_intake.getCommandsLayout().add(new ToggleIntakeMotor(m_intake)); 
@@ -187,9 +196,9 @@ public class RobotContainer {
     // Configure default commands
 
     // Configure button commands
-    // m_driverOI.getIncrementFlywheelButton().whileHeld(new IncrementFlywheel(m_flywheel));
-    // m_driverOI.getDecrementFlywheelButton().whileHeld(new DecrementFlywheel(m_flywheel));
-    // m_driverOI.getToggleFlywheelButton().whenPressed(new ToggleFlywheel(m_flywheel));
+    // m_driverOI.getIncrementFlywheelButton().whileTrue(new IncrementFlywheel(m_flywheel));
+    // m_driverOI.getDecrementFlywheelButton().whileTrue(new DecrementFlywheel(m_flywheel));
+    // m_driverOI.getToggleFlywheelButton().onTrue(new ToggleFlywheel(m_flywheel));
 
     // // Configure Shuffleboard commands
     // m_flywheel.getCommandsLayout().add(new DecrementFlywheel(m_flywheel));
@@ -205,10 +214,10 @@ public class RobotContainer {
     // Configure default commands
 
     // Configure button commands
-    // m_operatorOI.getExtendClimber().whileHeld(new ExtendClimberBars(m_climber));
-    // m_operatorOI.getRetractClimber().whileHeld(new RetractClimberBars(m_climber));
-    // m_operatorOI.getTiltForward().whenPressed(new InstantCommand(m_climber::tiltForward,m_climber));
-    // m_operatorOI.getTiltBack().whenPressed(new InstantCommand(m_climber::tiltBack,m_climber));
+    // m_operatorOI.getExtendClimber().whileTrue(new ExtendClimberBars(m_climber));
+    // m_operatorOI.getRetractClimber().whileTrue(new RetractClimberBars(m_climber));
+    // m_operatorOI.getTiltForward().onTrue(new InstantCommand(m_climber::tiltForward,m_climber));
+    // m_operatorOI.getTiltBack().onTrue(new InstantCommand(m_climber::tiltBack,m_climber));
 
     
 
