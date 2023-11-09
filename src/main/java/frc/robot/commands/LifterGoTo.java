@@ -15,13 +15,14 @@ public class LifterGoTo extends PIDCommand {
   public LifterGoTo(Lifter lifter, double position) {
     super(
         // The controller that the command will use
-        new PIDController(0, 0, 0),
+        new PIDController(0.5, 0, 0),
         // This should return the measurement
         () -> lifter.lifterPos(),
         // This should return the setpoint (can also be a constant)
         () -> position,
         // This uses the output
         output -> {
+          System.out.println("tilt");
           if(lifter.lifterPos() > position){
             lifter.Raise();
           }

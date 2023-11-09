@@ -15,7 +15,8 @@ import com.ctre.phoenix.motorcontrol.SupplyCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX; // tyr
 // import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX; 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX; // tyr
-
+import frc.robot.commands.LifterGoTo;
+import frc.robot.sensors.Pigeon;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
@@ -34,6 +35,8 @@ import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.Constants;
@@ -43,9 +46,6 @@ import com.ctre.phoenix.motorcontrol.TalonFXSimCollection;
 import com.ctre.phoenix.motorcontrol.TalonSRXSimCollection;
 
 import com.ctre.phoenix.sensors.BasePigeonSimCollection;
-import com.ctre.phoenix.sensors.WPI_Pigeon2;
-import com.ctre.phoenix.sensors.WPI_PigeonIMU;
-
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
@@ -67,6 +67,8 @@ public class Drivetrain extends SubsystemBase {
 	public static int frontLeftDrive = 15;
 	public static int frontRightDrive = 0;
 
+    // Pigeon
+    public static Pigeon m_pigeon = new Pigeon();
     // new CANTalon(RobotMap.frontLeftDrive)  // leftLeader ??
     private final WPI_TalonSRX m_leftLeader = new WPI_TalonSRX(frontLeftDrive);  // leftLeader ??
     private final WPI_TalonSRX m_rightLeader = new WPI_TalonSRX(frontRightDrive);  // m_rightLeader ??
@@ -74,10 +76,12 @@ public class Drivetrain extends SubsystemBase {
     private final WPI_TalonSRX m_rightFollower = new WPI_TalonSRX(backRightDrive);  // m_rightFollower ??
 
    ///  use Tyr IMU/gyro
-   // private WPI_PigeonIMU m_pigeon = new WPI_PigeonIMU(Constants.CANBusIDs.kPigeonIMU);
     private final ADXRS450_Gyro gyro = new ADXRS450_Gyro(); // tyr
     private double m_yaw;
-
+    private double m_roll;
+    private static double lifterpos;
+    private static double absPos;
+    private static double offsetLifter;
 
     private DifferentialDrive m_differentialDrive;
 
@@ -92,6 +96,7 @@ public class Drivetrain extends SubsystemBase {
     public static final double kNominalVoltageVolts = 12.0;
     private DifferentialDriveWheelSpeeds m_prevSpeeds;
     private double m_targetVelocityRotationsPerSecond;
+    private static double m_pitch;
 
     //private double m_leftPosition, m_rightPosition;
     private Supplier<Transmission.GearState> m_gearStateSupplier;
@@ -100,12 +105,14 @@ public class Drivetrain extends SubsystemBase {
 
     private double m_leftVelocity, m_rightVelocity; 
 
+    private static double m_shooterPos;
+
     ShuffleboardTab m_driveTab;
     private final Field2d m_field2d = new Field2d();
-
+    private final static Lifter m_lifter = new Lifter();
     GenericEntry m_leftFFEntry, m_rightFFEntry, m_headingEntry;
     GenericEntry m_leftWheelPositionEntry, m_rightWheelPositionEntry;
-    GenericEntry m_odometryXEntry, m_odometryYEntry, m_odometryHeadingEntry;
+    GenericEntry m_lifterPosition, m_odometryYEntry, m_odometryHeadingEntry;
 
 
     // ------ Simulation classes to help us simulate our robot ---------
@@ -147,8 +154,12 @@ public class Drivetrain extends SubsystemBase {
         // Save previous wheel speeds. Start at zero.
         m_prevSpeeds = new DifferentialDriveWheelSpeeds(0,0);
 
+
+        m_shooterPos = m_lifter.lifterPos();
         // Setup odometry to start at position 0,0 (top left of field)
         m_yaw = gyro.getAngle(); // m_pigeon.getYaw();
+        m_pitch = m_pigeon.getPitch();
+        m_roll = m_pigeon.getRoll();
         SmartDashboard.putNumber("Initial robot yaw", m_yaw);
     
         Rotation2d initialHeading = new Rotation2d(m_yaw);
@@ -264,17 +275,17 @@ public class Drivetrain extends SubsystemBase {
             .getEntry();   
             
         ShuffleboardTab m_odometryTab = Shuffleboard.getTab("Odometry");    
-        m_odometryXEntry = m_odometryTab.add("X Odometry", 0)
+        m_lifterPosition = m_odometryTab.add("lifter position", m_lifter.lifterPos() )
             .withWidget(BuiltInWidgets.kGraph)            
             .withSize(2,2)
             .withPosition(7, 0)
             .getEntry();
-        m_odometryYEntry = m_odometryTab.add("Y Odometry", 0)
+        m_odometryYEntry = m_odometryTab.add("Angle", m_pigeon.getRoll())
             .withWidget(BuiltInWidgets.kGraph)            
             .withSize(2,2)
             .withPosition(9, 0)
             .getEntry();
-        m_odometryHeadingEntry = m_odometryTab.add("Heading Odometry", 0)
+        m_odometryHeadingEntry = m_odometryTab.add("Pitch", m_pigeon.getPitch())
             .withWidget(BuiltInWidgets.kGraph)            
             .withSize(2,2)
             .withPosition(8, 3)
@@ -288,10 +299,22 @@ public class Drivetrain extends SubsystemBase {
     @Override
     public void periodic() {
 
-        // publishTelemetry();   
+        publishTelemetry(); 
+        LevelShooter();
+
         
     }
-
+    public double getYaw(){
+        m_yaw = gyro.getAngle();
+        return m_yaw;
+    }
+    public double getPitch(){
+        m_pitch = m_pigeon.getPitch();
+        return m_pitch;
+    }
+    public double getRoll(){
+        return m_pigeon.getRoll();
+    }
     public void publishTelemetry() {
         double leftPosition = getLeftDistanceMeters();
         double rightPosition = getRightDistanceMeters();
@@ -306,10 +329,11 @@ public class Drivetrain extends SubsystemBase {
    
         m_headingEntry.setDouble(m_yaw);
         m_field2d.setRobotPose(getPose());
-
-        m_odometryXEntry.setDouble(m_odometry.getPoseMeters().getX());
-        m_odometryYEntry.setDouble(m_odometry.getPoseMeters().getY());
-        m_odometryHeadingEntry.setDouble(m_odometry.getPoseMeters().getRotation().getDegrees());
+        m_shooterPos = m_lifter.lifterPos();
+        m_lifterPosition.setDouble(m_shooterPos);
+        m_odometryYEntry.setDouble(m_pigeon.getRoll());
+        m_pitch = m_pigeon.getPitch();
+        m_odometryHeadingEntry.setDouble(m_pitch);
 
         SmartDashboard.putNumber("Left Wheel Position", leftPosition);
         SmartDashboard.putNumber("Right Wheel Position", rightPosition);
@@ -377,7 +401,17 @@ public class Drivetrain extends SubsystemBase {
         m_rightLeader.set(ControlMode.PercentOutput, rightVolts/12);
         m_differentialDrive.feed();
     }
+    public static void LevelShooter(){
+        lifterpos = (long) m_shooterPos;
+        absPos = ((lifterpos + 100000) / 137152) * 90;
+        offsetLifter = ((m_pitch / 360) * 137152)-100000;
+        System.out.println((((m_pitch/360) * 137152)) + " Pitch adjusted");
+        InstantCommand command = new InstantCommand(() -> new LifterGoTo(m_lifter, lifterpos - offsetLifter + lifterpos));
+        command.schedule();
+        
 
+        
+    }
     public void setOutputMetersPerSecond(double leftMetersPerSecond, double rightMetersPerSecond) {
         
         // Calculate feedforward for the left and right wheels.

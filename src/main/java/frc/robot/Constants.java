@@ -48,7 +48,8 @@ public final class Constants {
 
         // Drivetrain, left side
         public static final int kDrivetrainLeftFrontTalonFX = 14;
-        public static final int kDrivetrainLeftBackTalonFX = 15;       
+        public static final int kDrivetrainLeftBackTalonFX = 15;     
+        public static final int Pigeon = 0;  
     }
 
     public static final class PneumaticIDs {
