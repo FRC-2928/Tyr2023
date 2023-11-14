@@ -82,6 +82,8 @@ public class Drivetrain extends SubsystemBase {
     private static double lifterpos;
     private static double absPos;
     private static double offsetLifter;
+    private static LifterGoTo command;
+    private static boolean firstTime = false;
 
     private DifferentialDrive m_differentialDrive;
 
@@ -296,11 +298,16 @@ public class Drivetrain extends SubsystemBase {
     // -----------------------------------------------------------
     // Process Logic
     // -----------------------------------------------------------
+    int v = 0;
     @Override
+    
     public void periodic() {
-
+        v++;
         publishTelemetry(); 
-        LevelShooter();
+        if(v > 18){
+            LevelShooter();
+            v=0;
+        }
 
         
     }
@@ -403,11 +410,20 @@ public class Drivetrain extends SubsystemBase {
     }
     public static void LevelShooter(){
         lifterpos = (long) m_shooterPos;
-        absPos = ((lifterpos + 100000) / 137152) * 90;
-        offsetLifter = ((m_pitch / 360) * 137152)-100000;
-        System.out.println((((m_pitch/360) * 137152)) + " Pitch adjusted");
-        InstantCommand command = new InstantCommand(() -> new LifterGoTo(m_lifter, lifterpos - offsetLifter + lifterpos));
-        command.schedule();
+        absPos = ((lifterpos ) / 137152) * 90;
+        offsetLifter = ((m_pitch / 360) * 137152);
+        System.out.println(offsetLifter + " Pitch adjusted");
+        System.out.println(m_lifter.lifterPos());
+        if(!firstTime){
+            firstTime = true;
+            command = new LifterGoTo(m_lifter, offsetLifter  - lifterpos);
+        }
+        if(!command.isFinished()){
+            
+            command.schedule();
+        }
+
+        
         
 
         

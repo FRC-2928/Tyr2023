@@ -15,15 +15,15 @@ public class LifterGoTo extends PIDCommand {
   public LifterGoTo(Lifter lifter, double position) {
     super(
         // The controller that the command will use
-        new PIDController(0.5, 0, 0),
+        new PIDController(0.2, 0, 0.1),
         // This should return the measurement
         () -> lifter.lifterPos(),
         // This should return the setpoint (can also be a constant)
-        () -> position,
+        () -> -position,
         // This uses the output
         output -> {
-          System.out.println("tilt");
-          if(lifter.lifterPos() > position){
+
+          if(lifter.lifterPos() < position){
             lifter.Raise();
           }
           else{
@@ -32,13 +32,15 @@ public class LifterGoTo extends PIDCommand {
         });
     // Use addRequirements() here to declare subsystem dependencies.
     // Configure additional PID options by calling `getController` here.
-    getController().setTolerance(2);
+    getController().setTolerance(500);
     addRequirements(lifter);
+    System.out.println(-position);
   }
 
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
     return getController().atSetpoint();
+
   }
 }
