@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
@@ -79,11 +80,11 @@ public class Drivetrain extends SubsystemBase {
     private final ADXRS450_Gyro gyro = new ADXRS450_Gyro(); // tyr
     private double m_yaw;
     private double m_roll;
-    private static double lifterpos;
     private static double absPos;
     private static double offsetLifter;
     private static LifterGoTo command;
     private static boolean firstTime = false;
+    private static PIDController levelShooterPid = Constants.DrivetrainConstants.levelShooterPid;
 
     private DifferentialDrive m_differentialDrive;
 
@@ -98,7 +99,6 @@ public class Drivetrain extends SubsystemBase {
     public static final double kNominalVoltageVolts = 12.0;
     private DifferentialDriveWheelSpeeds m_prevSpeeds;
     private double m_targetVelocityRotationsPerSecond;
-    private static double m_pitch;
 
     //private double m_leftPosition, m_rightPosition;
     private Supplier<Transmission.GearState> m_gearStateSupplier;
@@ -107,14 +107,13 @@ public class Drivetrain extends SubsystemBase {
 
     private double m_leftVelocity, m_rightVelocity; 
 
-    private static double m_shooterPos;
 
     ShuffleboardTab m_driveTab;
     private final Field2d m_field2d = new Field2d();
     private final static Lifter m_lifter = new Lifter();
     GenericEntry m_leftFFEntry, m_rightFFEntry, m_headingEntry;
     GenericEntry m_leftWheelPositionEntry, m_rightWheelPositionEntry;
-    GenericEntry m_lifterPosition, m_odometryYEntry, m_odometryHeadingEntry;
+    GenericEntry m_lifterPosition, m_odometryYEntry, m_odometryHeadingEntry, m_odometryDiffrence;
 
 
     // ------ Simulation classes to help us simulate our robot ---------
@@ -157,10 +156,8 @@ public class Drivetrain extends SubsystemBase {
         m_prevSpeeds = new DifferentialDriveWheelSpeeds(0,0);
 
 
-        m_shooterPos = m_lifter.lifterPos();
         // Setup odometry to start at position 0,0 (top left of field)
         m_yaw = gyro.getAngle(); // m_pigeon.getYaw();
-        m_pitch = m_pigeon.getPitch();
         m_roll = m_pigeon.getRoll();
         SmartDashboard.putNumber("Initial robot yaw", m_yaw);
     
@@ -277,7 +274,7 @@ public class Drivetrain extends SubsystemBase {
             .getEntry();   
             
         ShuffleboardTab m_odometryTab = Shuffleboard.getTab("Odometry");    
-        m_lifterPosition = m_odometryTab.add("lifter position", m_lifter.lifterPos() )
+        m_lifterPosition = m_odometryTab.add("lifter position", m_lifter.anglePos() )
             .withWidget(BuiltInWidgets.kGraph)            
             .withSize(2,2)
             .withPosition(7, 0)
@@ -292,6 +289,11 @@ public class Drivetrain extends SubsystemBase {
             .withSize(2,2)
             .withPosition(8, 3)
             .getEntry();
+        m_odometryDiffrence = m_odometryTab.add("Pitch - lifter Position", m_pigeon.getPitch()-m_lifter.anglePos())
+            .withWidget(BuiltInWidgets.kGraph)            
+            .withSize(2,2)
+            .withPosition(8, 3)
+            .getEntry();
                    
     }
 
@@ -302,22 +304,17 @@ public class Drivetrain extends SubsystemBase {
     @Override
     
     public void periodic() {
-        v++;
         publishTelemetry(); 
-        if(v > 18){
-            LevelShooter();
-            v=0;
-        }
-
-        
+        double output = levelShooterPid.calculate(m_lifter.anglePos(), m_pigeon.getPitch()-m_lifter.anglePos());
+        System.out.println(output);
+        m_lifter.RunAtSpeed(output);
     }
     public double getYaw(){
         m_yaw = gyro.getAngle();
         return m_yaw;
     }
     public double getPitch(){
-        m_pitch = m_pigeon.getPitch();
-        return m_pitch;
+        return m_pigeon.getPitch();
     }
     public double getRoll(){
         return m_pigeon.getRoll();
@@ -333,15 +330,13 @@ public class Drivetrain extends SubsystemBase {
 
         // Update the odometry for either real or simulated robot
         m_odometry.update(getRotation(), leftPosition, rightPosition);
-   
+        m_odometryDiffrence.setDouble(m_pigeon.getPitch()-m_lifter.anglePos());
         m_headingEntry.setDouble(m_yaw);
         m_field2d.setRobotPose(getPose());
-        m_shooterPos = m_lifter.lifterPos();
-        m_lifterPosition.setDouble(m_shooterPos);
+        m_lifterPosition.setDouble(m_lifter.anglePos());
         m_odometryYEntry.setDouble(m_pigeon.getRoll());
-        m_pitch = m_pigeon.getPitch();
-        m_odometryHeadingEntry.setDouble(m_pitch);
-
+        m_odometryHeadingEntry.setDouble(m_pigeon.getPitch());
+        SmartDashboard.putNumber("pitch - pos", m_pigeon.getPitch()-m_lifter.anglePos());
         SmartDashboard.putNumber("Left Wheel Position", leftPosition);
         SmartDashboard.putNumber("Right Wheel Position", rightPosition);
         m_leftWheelPositionEntry.setDouble(leftPosition);
@@ -409,24 +404,18 @@ public class Drivetrain extends SubsystemBase {
         m_differentialDrive.feed();
     }
     public static void LevelShooter(){
-        lifterpos = (long) m_shooterPos;
-        absPos = ((lifterpos ) / 137152) * 90;
-        offsetLifter = ((m_pitch / 360) * 137152);
+        
         System.out.println(offsetLifter + " Pitch adjusted");
-        System.out.println(m_lifter.lifterPos());
+        System.out.println(m_lifter.sensorPos());
         if(!firstTime){
             firstTime = true;
-            command = new LifterGoTo(m_lifter, offsetLifter  - lifterpos);
+            command = new LifterGoTo(m_lifter, m_pigeon.getPitch()  - m_lifter.anglePos());
         }
-        if(!command.isFinished()){
-            
+
+        if(command.isFinished()){
+            command = new LifterGoTo(m_lifter, m_pigeon.getPitch()  - m_lifter.anglePos());
             command.schedule();
-        }
-
-        
-        
-
-        
+        }        
     }
     public void setOutputMetersPerSecond(double leftMetersPerSecond, double rightMetersPerSecond) {
         

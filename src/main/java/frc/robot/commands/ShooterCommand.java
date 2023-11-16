@@ -42,7 +42,7 @@ public class ShooterCommand extends CommandBase {
 			m_lifter.Lower();
 		}
 		
-		SmartDashboard.putNumber("EncPos", m_lifter.lifterPos());
+		SmartDashboard.putNumber("EncPos", m_lifter.sensorPos());
 	}
 
  	// Returns true when the command should end.
@@ -55,7 +55,7 @@ public class ShooterCommand extends CommandBase {
 	@Override
 	public void end(boolean interrupted) {
 		m_lifter.Stop();
-		SmartDashboard.putNumber("EncPos", m_lifter.lifterPos());
+		SmartDashboard.putNumber("EncPos", m_lifter.sensorPos());
 	}
 
 	// @Override

@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
@@ -77,6 +78,9 @@ public final class Constants {
         public static final double kvVoltSecondsPerMeter = 0.21907;
         public static final double kaVoltSecondsSquaredPerMeter = 0.0096252;
 
+
+        //pid
+        public static final PIDController levelShooterPid =  new PIDController(2, 0, 0);
         // Feedforward contraints          
        public static final SimpleMotorFeedforward kFeedForward = 
        new SimpleMotorFeedforward(ksVolts, kvVoltSecondsPerMeter, kaVoltSecondsSquaredPerMeter);

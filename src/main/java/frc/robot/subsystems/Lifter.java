@@ -13,9 +13,12 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX; // tyr
 public class Lifter extends SubsystemBase {
 	private WPI_TalonSRX motor;
 	public static int lifterMotor = 4;
+
 	public Lifter() {
 		this.motor = new WPI_TalonSRX(lifterMotor);
+		
 		motor.setSelectedSensorPosition(0);
+	
 	}
 
 	// public Lifter(String name) {
@@ -33,7 +36,7 @@ public class Lifter extends SubsystemBase {
 		this.motor.set(-.5);
 	}
 	
-	public void RunAtSpeed(float speed)
+	public void RunAtSpeed(double speed)
 	{
 		if (speed > .5 || speed < -.5)
 		{
@@ -46,11 +49,14 @@ public class Lifter extends SubsystemBase {
 	{
 		this.motor.set(0);
 	}
-	public double lifterPos()
+	public double sensorPos()
 	{
 		return motor.getSelectedSensorPosition();
 		// System.out.println(">>>>>>Lifter SRX POSITION TBD !!!!!");
 		// return 0;
+	}
+	public double anglePos(){
+		return Math.abs(this.sensorPos()/1522);
 	}
 	// @Override
 	// protected void initDefaultCommand() {

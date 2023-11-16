@@ -17,24 +17,19 @@ public class LifterGoTo extends PIDCommand {
         // The controller that the command will use
         new PIDController(0.2, 0, 0.1),
         // This should return the measurement
-        () -> lifter.lifterPos(),
+        () -> lifter.anglePos(),
         // This should return the setpoint (can also be a constant)
-        () -> -position,
+        () -> position,
         // This uses the output
         output -> {
 
-          if(lifter.lifterPos() < position){
-            lifter.Raise();
-          }
-          else{
-            lifter.Lower();
-          }
+          lifter.RunAtSpeed(output);
         });
     // Use addRequirements() here to declare subsystem dependencies.
     // Configure additional PID options by calling `getController` here.
     getController().setTolerance(500);
     addRequirements(lifter);
-    System.out.println(-position);
+    System.out.println(position);
   }
 
   // Returns true when the command should end.
