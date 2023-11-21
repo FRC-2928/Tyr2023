@@ -38,8 +38,10 @@ public class ShooterCommand extends CommandBase {
 	 public void execute() {
 		if (m_raise) {
 			m_lifter.Raise();
+			Constants.DrivetrainConstants.absPosition = Math.abs(m_lifter.anglePos());
 		} else {
 			m_lifter.Lower();
+			Constants.DrivetrainConstants.absPosition = Math.abs(m_lifter.anglePos());
 		}
 		
 		SmartDashboard.putNumber("EncPos", m_lifter.sensorPos());

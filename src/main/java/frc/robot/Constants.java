@@ -80,10 +80,11 @@ public final class Constants {
 
 
         //pid
-        public static final PIDController levelShooterPid =  new PIDController(2, 0, 0);
+        public static final PIDController levelShooterPid =  new PIDController(0.01, 0, 0);
         // Feedforward contraints          
        public static final SimpleMotorFeedforward kFeedForward = 
        new SimpleMotorFeedforward(ksVolts, kvVoltSecondsPerMeter, kaVoltSecondsSquaredPerMeter);
+       public static double absPosition = 0;
 
         public static final double kTrackWidthMeters = 0.7; //Placeholder
         public static final DifferentialDriveKinematics kDriveKinematics =

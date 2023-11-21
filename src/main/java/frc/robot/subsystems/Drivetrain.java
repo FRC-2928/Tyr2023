@@ -69,6 +69,7 @@ public class Drivetrain extends SubsystemBase {
 	public static int frontRightDrive = 0;
 
     // Pigeon
+    public static double outputPid;
     public static Pigeon m_pigeon = new Pigeon();
     // new CANTalon(RobotMap.frontLeftDrive)  // leftLeader ??
     private final WPI_TalonSRX m_leftLeader = new WPI_TalonSRX(frontLeftDrive);  // leftLeader ??
@@ -79,8 +80,6 @@ public class Drivetrain extends SubsystemBase {
    ///  use Tyr IMU/gyro
     private final ADXRS450_Gyro gyro = new ADXRS450_Gyro(); // tyr
     private double m_yaw;
-    private double m_roll;
-    private static double absPos;
     private static double offsetLifter;
     private static LifterGoTo command;
     private static boolean firstTime = false;
@@ -158,7 +157,6 @@ public class Drivetrain extends SubsystemBase {
 
         // Setup odometry to start at position 0,0 (top left of field)
         m_yaw = gyro.getAngle(); // m_pigeon.getYaw();
-        m_roll = m_pigeon.getRoll();
         SmartDashboard.putNumber("Initial robot yaw", m_yaw);
     
         Rotation2d initialHeading = new Rotation2d(m_yaw);
@@ -279,7 +277,7 @@ public class Drivetrain extends SubsystemBase {
             .withSize(2,2)
             .withPosition(7, 0)
             .getEntry();
-        m_odometryYEntry = m_odometryTab.add("Angle", m_pigeon.getRoll())
+        m_odometryYEntry = m_odometryTab.add("Abs Postion", 0)
             .withWidget(BuiltInWidgets.kGraph)            
             .withSize(2,2)
             .withPosition(9, 0)
@@ -289,7 +287,7 @@ public class Drivetrain extends SubsystemBase {
             .withSize(2,2)
             .withPosition(8, 3)
             .getEntry();
-        m_odometryDiffrence = m_odometryTab.add("Pitch - lifter Position", m_pigeon.getPitch()-m_lifter.anglePos())
+        m_odometryDiffrence = m_odometryTab.add("output for the PID", 0)
             .withWidget(BuiltInWidgets.kGraph)            
             .withSize(2,2)
             .withPosition(8, 3)
@@ -305,9 +303,8 @@ public class Drivetrain extends SubsystemBase {
     
     public void periodic() {
         publishTelemetry(); 
-        double output = levelShooterPid.calculate(m_lifter.anglePos(), m_pigeon.getPitch()-m_lifter.anglePos());
-        System.out.println(output);
-        m_lifter.RunAtSpeed(output);
+        outputPid = levelShooterPid.calculate(m_lifter.anglePos(), (m_pigeon.getPitch()+Constants.DrivetrainConstants.absPosition));
+        m_lifter.RunAtSpeed(outputPid);
     }
     public double getYaw(){
         m_yaw = gyro.getAngle();
@@ -330,11 +327,11 @@ public class Drivetrain extends SubsystemBase {
 
         // Update the odometry for either real or simulated robot
         m_odometry.update(getRotation(), leftPosition, rightPosition);
-        m_odometryDiffrence.setDouble(m_pigeon.getPitch()-m_lifter.anglePos());
+        m_odometryDiffrence.setDouble(outputPid);
         m_headingEntry.setDouble(m_yaw);
         m_field2d.setRobotPose(getPose());
         m_lifterPosition.setDouble(m_lifter.anglePos());
-        m_odometryYEntry.setDouble(m_pigeon.getRoll());
+        m_odometryYEntry.setDouble(Constants.DrivetrainConstants.absPosition);
         m_odometryHeadingEntry.setDouble(m_pigeon.getPitch());
         SmartDashboard.putNumber("pitch - pos", m_pigeon.getPitch()-m_lifter.anglePos());
         SmartDashboard.putNumber("Left Wheel Position", leftPosition);

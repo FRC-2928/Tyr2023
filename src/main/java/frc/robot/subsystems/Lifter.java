@@ -9,6 +9,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX; // tyr
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX; // tyr
 
+import frc.robot.Constants;
+import frc.robot.Constants.DrivetrainConstants;
 
 public class Lifter extends SubsystemBase {
 	private WPI_TalonSRX motor;
@@ -28,21 +30,23 @@ public class Lifter extends SubsystemBase {
 	
 	public void Raise()
 	{
-		this.motor.set(.5);
+		this.motor.set(1);
+		
 	}
 	
 	public void Lower()
 	{
-		this.motor.set(-.5);
+		this.motor.set(-1);
+		
 	}
 	
 	public void RunAtSpeed(double speed)
 	{
-		if (speed > .5 || speed < -.5)
-		{
-			this.motor.set(0);
-			return;
-		}
+		// if (speed > .5 || speed < -.5)
+		// {
+		// 	this.motor.set(0);
+		// 	return;
+		// }
 		this.motor.set(speed);
 	}
 	public void Stop()
