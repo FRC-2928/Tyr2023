@@ -303,7 +303,8 @@ public class Drivetrain extends SubsystemBase {
     
     public void periodic() {
         publishTelemetry(); 
-        outputPid = levelShooterPid.calculate(m_lifter.anglePos(), (m_pigeon.getPitch()+Constants.DrivetrainConstants.absPosition));
+//        outputPid = levelShooterPid.calculate(m_lifter.anglePos(), (m_pigeon.getPitch()+Constants.DrivetrainConstants.absPosition));
+        outputPid = levelShooterPid.calculate(m_lifter.anglePos(), m_pigeon.getPitch() +20 );
         m_lifter.RunAtSpeed(outputPid);
     }
     public double getYaw(){
